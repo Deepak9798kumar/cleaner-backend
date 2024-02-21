@@ -27,62 +27,6 @@ app.use(express.json());
 
 // System Information receive
 
-app.get("/system-info", async (req, res) => {
-  try {
-    const systemInfo = await si.system();
-    const osInfo = await si.osInfo();
-    const cpuInfo = await si.cpu();
-    const memInfo = await si.mem();
-
-    // Use wmic to get the device name
-    exec("wmic computersystem get caption", (error, stdout) => {
-      if (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
-      }
-
-      const deviceName = stdout.split("\n")[1].trim();
-
-      const additionalInfo = {
-        deviceName,
-        deviceID: systemInfo.serial,
-        installedRAM: memInfo.total / (1024 * 1024 * 1024), // Convert to GB
-        productID: systemInfo.product,
-        systemType: systemInfo.manufacturer,
-      };
-
-      const finalInfo = {
-        ...additionalInfo,
-        model: systemInfo.model,
-        os: `${osInfo.distro} ${osInfo.release}`,
-        processor: `${cpuInfo.manufacturer} ${cpuInfo.brand}`,
-      };
-      res.json(finalInfo);
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-const runWMICCommand = (command) => {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout) => {
-      if (error) {
-        reject(error);
-      } else {
-        const lines = stdout.trim().split("\n");
-        const values = lines.slice(1).map((line) => line.trim().split(/\s+/));
-        resolve(values);
-      }
-    });
-  });
-};
-
-const bytesToGB = (bytes) => {
-  return bytes / (1024 * 1024 * 1024);
-};
 
 app.get("/systeminfo", async (req, res) => {
   try {
